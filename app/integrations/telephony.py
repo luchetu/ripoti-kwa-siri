@@ -1,0 +1,2 @@
+"""Telephony provider adapter boundary."""
+
