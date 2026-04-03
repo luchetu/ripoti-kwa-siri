@@ -18,7 +18,7 @@ This repository is currently at the prototype architecture stage. The goal is to
 flowchart LR
     A["Citizen Caller"] --> B["Dedicated Hotline"]
     B --> C["Telephony Gateway"]
-    C --> D["Prototype API App"]
+    C --> D["Anonymous Reporting Backend"]
 
     D --> E["Call Flow Module"]
     D --> F["Privacy Service"]

@@ -10,7 +10,7 @@
 flowchart TD
     A["Citizen"] --> B["Dedicated Hotline"]
     B --> C["Telephony Gateway"]
-    C --> D["FastAPI Prototype App"]
+    C --> D["Anonymous Reporting Backend"]
 
     D --> E["Call Flow Module"]
     D --> F["Privacy Module"]
@@ -36,9 +36,9 @@ flowchart TD
 - forwards sessions into the prototype app
 - should expose only the minimum metadata needed for operations
 
-### FastAPI Prototype App
+### Anonymous Reporting Backend
 
-- provides the main HTTP entrypoint for webhooks, health checks, and internal APIs
+- provides the main backend entrypoint for webhooks, health checks, and internal APIs
 - keeps the first version simple by hosting the full reporting flow in one application
 - coordinates intake, privacy, tracking, storage, and routing modules
 
