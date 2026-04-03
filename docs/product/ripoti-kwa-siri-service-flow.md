@@ -88,30 +88,34 @@ The referral package should include:
 ```text
 ripoti-kwa-siri/
 ├── app/
-│   ├── main.py
 │   ├── api/
 │   │   ├── routes/
 │   │   └── schemas/
+│   ├── main.py
 │   ├── core/
 │   │   ├── config.py
 │   │   ├── logging.py
 │   │   └── security.py
 │   ├── call_flow/
-│   │   ├── intake.py
-│   │   ├── questions.py
-│   │   ├── summary.py
-│   │   └── tracking.py
+│   │   └── controller.py
 │   ├── integrations/
 │   │   ├── telephony.py
 │   │   ├── realtime.py
 │   │   └── llm.py
+│   ├── preview.py
+│   ├── runtime.py
 │   ├── services/
 │   │   ├── case_store.py
+│   │   ├── intake_service.py
 │   │   ├── privacy.py
-│   │   └── routing.py
+│   │   ├── routing.py
+│   │   ├── summary.py
+│   │   └── tracking.py
 │   └── models/
 │       ├── case.py
 │       └── tracking.py
+├── run_agent.py
+├── run_api.py
 ├── tests/
 │   ├── test_intake.py
 │   ├── test_privacy.py

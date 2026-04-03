@@ -68,7 +68,8 @@ flowchart TD
 
 ### Routing Module
 
-- selects the right institution based on case type and urgency
+- classifies the final case summary into a broad category
+- selects the right institution from that category
 - securely transmits the anonymous case package
 - records referral delivery status or mock hand-off status
 
@@ -92,21 +93,25 @@ ripoti-kwa-siri/
 │   │   ├── logging.py
 │   │   └── security.py
 │   ├── call_flow/
-│   │   ├── intake.py
-│   │   ├── questions.py
-│   │   ├── summary.py
-│   │   └── tracking.py
+│   │   └── controller.py
 │   ├── integrations/
 │   │   ├── telephony.py
 │   │   ├── realtime.py
 │   │   └── llm.py
+│   ├── preview.py
+│   ├── runtime.py
 │   ├── services/
 │   │   ├── case_store.py
+│   │   ├── intake_service.py
 │   │   ├── privacy.py
-│   │   └── routing.py
+│   │   ├── routing.py
+│   │   ├── summary.py
+│   │   └── tracking.py
 │   └── models/
 │       ├── case.py
 │       └── tracking.py
+├── run_agent.py
+├── run_api.py
 ├── tests/
 │   ├── test_intake.py
 │   ├── test_privacy.py
@@ -129,8 +134,9 @@ ripoti-kwa-siri/
 6. The case-store module saves the anonymous report.
 7. A tracking code is generated and returned to the caller.
 8. The report is summarized.
-9. The routing module transmits it to EACC, DCI, or another approved body.
-10. Audit logs preserve the internal action trail.
+9. The routing module classifies the final summary and selects the destination.
+10. The routing module transmits it to EACC, DCI, or another approved body.
+11. Audit logs preserve the internal action trail.
 
 ## Security and Privacy Notes
 
