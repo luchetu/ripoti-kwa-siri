@@ -1,2 +1,68 @@
-"""Application configuration for the prototype."""
+"""Application settings using Pydantic settings."""
 
+from __future__ import annotations
+
+from collections.abc import Mapping
+from functools import lru_cache
+from pathlib import Path
+from typing import Any, cast
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+import yaml
+
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+
+
+class AppSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env.local",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    app_name: str = "ripoti-kwa-siri"
+    prompt_path: Path = Field(default=BASE_DIR / "prompts" / "anonymous_reporting_agent.yaml")
+
+    # Realtime transport
+    realtime_url: str | None = None
+    realtime_api_key: str | None = None
+    realtime_api_secret: str | None = None
+    voice_agent_name: str = "sauti"
+
+    # Gemini Live (native audio)
+    google_api_key: str | None = None
+    voice_live_model: str = "google/gemini-2.5-flash-native-audio-preview-12-2025"
+    voice_live_voice: str = "Puck"
+    voice_preemptive_generation: bool = True
+    routing_model: str = "gemini-2.5-flash"
+    openai_api_key: str | None = None
+    openai_routing_model: str = "gpt-4.1-mini"
+
+
+@lru_cache
+def get_settings() -> AppSettings:
+    return AppSettings()
+
+
+@lru_cache(maxsize=None)
+def load_prompt_document(prompt_path: str | Path) -> Mapping[str, Any]:
+    """Load a YAML prompt document once per process."""
+
+    resolved_path = Path(prompt_path).resolve()
+    with resolved_path.open("r", encoding="utf-8") as handle:
+        data = yaml.safe_load(handle) or {}
+    if not isinstance(data, dict):
+        raise ValueError(f"Prompt file must contain a top-level mapping: {resolved_path}")
+    return cast(Mapping[str, Any], data)
+
+
+def extract_yaml_block(prompt_path: str | Path, key: str) -> str:
+    """Read a named top-level string field from a cached YAML prompt document."""
+
+    document = load_prompt_document(prompt_path)
+    value = document.get(key)
+    if not isinstance(value, str):
+        raise ValueError(f"Prompt field '{key}' must be a string in {Path(prompt_path).resolve()}")
+    return value

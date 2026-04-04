@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from pydantic import BaseModel
 
 
-@dataclass(frozen=True, slots=True)
-class TrackingReference:
+class TrackingReference(BaseModel):
     tracking_code: str
     status: str = "received"

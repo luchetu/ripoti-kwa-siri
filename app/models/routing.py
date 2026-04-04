@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Literal
+
+from pydantic import BaseModel
 
 
 ReportType = Literal["corruption", "organized_crime", "unknown"]
 RoutingConfidence = Literal["high", "medium", "low"]
 
 
-@dataclass(frozen=True, slots=True)
-class RoutingClassification:
+class RoutingClassification(BaseModel):
     report_type: ReportType
     confidence: RoutingConfidence
     reasoning: str

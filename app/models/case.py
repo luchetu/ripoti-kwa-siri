@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from pydantic import BaseModel, Field
 
 
-@dataclass(slots=True)
-class CaseDraft:
+class CaseDraft(BaseModel):
     report_type: str = "unknown"
     routing_confidence: str = "low"
     routing_reasoning: str = ""
     narrative: str = ""
     location: str | None = None
     event_time: str | None = None
-    entities_involved: list[str] = field(default_factory=list)
-    supporting_details: dict[str, str] = field(default_factory=dict)
+    entities_involved: list[str] = Field(default_factory=list)
+    supporting_details: dict[str, str] = Field(default_factory=dict)
     source_basis: str | None = None
     urgency_level: str = "normal"
     caller_safety_concern: bool = False
