@@ -1,2 +1,0 @@
-"""Tracking-code generation helpers."""
-
