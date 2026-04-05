@@ -3,7 +3,7 @@
 from app.api.schemas.intake import IntakeRequest
 from app.call_flow.controller import IntakeFlowController
 from app.core.config import get_settings
-from app.preview import build_agent_blueprint, run_intake_preview
+from app.preview import preview_agent_blueprint, run_intake_preview
 from app.services.case_store import InMemoryCaseStore
 from app.services.intake_service import build_metadata_preview, submit_intake
 
@@ -33,7 +33,7 @@ def test_build_metadata_preview_scrubs_phone_number() -> None:
 
 
 def test_build_agent_blueprint_exposes_runtime_shape() -> None:
-    blueprint = build_agent_blueprint()
+    blueprint = preview_agent_blueprint()
     assert blueprint["agent_name"] == "Sauti"
     assert blueprint["opening_message"].startswith("You have reached ripoti-kwa-siri")
 

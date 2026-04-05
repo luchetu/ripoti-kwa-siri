@@ -74,11 +74,16 @@ def create_agent_server():
         await session.start(
             agent=SautiAgent(),
             room=ctx.room,
-            room_input_options=room_io.RoomInputOptions(
-                noise_cancellation=lambda params: noise_cancellation.BVC(),
+            room_options=room_io.RoomOptions(
+                audio_input=room_io.AudioInputOptions(
+                    noise_cancellation=lambda params: noise_cancellation.BVC(),
+                ),
             ),
         )
         await ctx.connect()
+        await session.generate_reply(
+            instructions="Greet the caller, introduce yourself as Sauti, and invite them to explain what happened."
+        )
 
     return server
 

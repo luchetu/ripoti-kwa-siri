@@ -7,7 +7,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, cast
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import yaml
 
@@ -39,6 +39,23 @@ class AppSettings(BaseSettings):
     routing_model: str = "gemini-2.5-flash"
     openai_api_key: str | None = None
     openai_routing_model: str = "gpt-4.1-mini"
+
+    # Telephony and dispatch
+    sip_inbound_numbers: list[str] = Field(default_factory=list)
+    sip_auth_username: str | None = None
+    sip_auth_password: str | None = None
+    sip_trunk_name: str = "ripoti-kwa-siri-inbound"
+    dispatch_rule_name: str = "ripoti-kwa-siri-inbound"
+    dispatch_room_prefix: str = "rks-call-"
+
+    @field_validator("sip_inbound_numbers", mode="before")
+    @classmethod
+    def _parse_sip_inbound_numbers(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            if not value.strip():
+                return []
+            return [item.strip() for item in value.split(",") if item.strip()]
+        return value
 
 
 @lru_cache
