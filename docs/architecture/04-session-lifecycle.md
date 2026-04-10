@@ -18,7 +18,7 @@ flowchart LR
     classDef phase   fill:#D97757,stroke:#9E4E2E,color:#fff
     classDef system  fill:#6366f1,stroke:#4338ca,color:#fff
     classDef model   fill:#0891b2,stroke:#0369a1,color:#fff
-    classDef end     fill:#15803d,stroke:#14532d,color:#fff
+    classDef done    fill:#15803d,stroke:#14532d,color:#fff
 
     S["run_agent.py\nstarts"]:::system
     P["prewarm()\nprocess ready"]:::phase
@@ -27,8 +27,8 @@ flowchart LR
     C["ctx.connect()\njoins room"]:::phase
     G["generate_reply()\ngreeting fires"]:::phase
     I["Intake conversation\n5 stages"]:::model
-    E["Caller hangs up\nor session ends"]:::end
-    CL["Room cleaned up\nby LiveKit"]:::end
+    E["Caller hangs up\nor session ends"]:::done
+    CL["Room cleaned up\nby LiveKit"]:::done
 
     S --> P --> W --> J --> C --> G --> I --> E --> CL
 ```
@@ -43,7 +43,7 @@ The agent server starts with:
 uv run run_agent.py
 ```
 
-This calls `run()` in `app/integrations/realtime.py`, which hands off to the
+This calls `run()` in `src/infrastructure/voice/agent.py`, which hands off to the
 LiveKit CLI:
 
 ```python
