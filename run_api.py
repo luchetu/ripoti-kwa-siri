@@ -9,10 +9,11 @@ def main() -> None:
     try:
         import uvicorn
     except ModuleNotFoundError:
-        sys.stderr.write("FastAPI runtime dependencies are missing. Install project dependencies first.\n")
+        sys.stderr.write(
+            "FastAPI runtime dependencies are missing. Install project dependencies first.\n"
+        )
         sys.exit(1)
-
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("src.interface.api.main:app", host="0.0.0.0", port=8000, reload=True)
 
 
 if __name__ == "__main__":
