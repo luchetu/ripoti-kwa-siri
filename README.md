@@ -1,168 +1,176 @@
 # ripoti-kwa-siri
 
-`ripoti-kwa-siri` is a voice-first anonymous reporting platform for corruption and organized crime tips. It is designed so a citizen can call a dedicated number, safely share what they know, receive a tracking code, and have the report routed to the right investigative body without requiring a face-to-face visit.
-
-This repository is currently at the prototype architecture stage. The goal is to prove the reporting flow with a small codebase before splitting the system into larger services.
+`ripoti-kwa-siri` is a voice-first anonymous reporting platform for corruption and organized crime tips. A citizen calls a dedicated number, safely shares what they know, receives a tracking code, and the report is routed to the right investigative body — without a face-to-face visit, without attaching their identity to the record.
 
 ## Service Flow
 
-1. `The Call`: a citizen calls the hotline to report corruption, abuse of office, trafficking, extortion, or organized crime.
-2. `The Shield`: the intake flow explains that the report will be stored without attaching the caller's phone number to the case record.
-3. `The Interview`: the agent listens, captures the story, and asks clarifying questions that improve investigative value.
-4. `The Receipt`: the caller receives a unique tracking code such as `Kiongozi-77`.
-5. `The Hand-off`: the report is summarized, the final summary is classified, and the case is securely routed to the appropriate investigative body.
+1. **The Call** — a citizen calls the hotline to report corruption, abuse of office, trafficking, extortion, or organized crime.
+2. **The Shield** — the intake flow explains that the report will be stored without attaching the caller's phone number to the case record.
+3. **The Interview** — the agent listens, captures the story, and asks clarifying questions that improve investigative value.
+4. **The Receipt** — the caller receives a unique tracking code such as `Kiongozi-3f9a12`.
+5. **The Hand-off** — the report is summarized, classified, and routed to the appropriate investigative body.
 
-## Prototype Architecture
+## Architecture
 
-```mermaid
-flowchart LR
-    A["Citizen Caller"] --> B["Dedicated Hotline"]
-    B --> C["Telephony Gateway"]
-    C --> D["Anonymous Reporting Backend"]
-
-    D --> E["Call Flow Module"]
-    D --> F["Privacy Service"]
-    D --> G["Case Store"]
-    D --> H["Routing Service"]
-
-    E --> E1["Interview Questions"]
-    E --> E2["Summary Builder"]
-    G --> G1["Tracking Code Generator"]
-
-    H --> I["EACC"]
-    H --> J["DCI"]
-    H --> K["Other Approved Bodies"]
-
-    D --> L["Audit Logs"]
-```
-
-## Voice Agent Architecture
-
-For the prototype, `ripoti-kwa-siri` uses a single caller-facing voice agent named `Sauti`. The design stays intentionally simple:
-
-- one real-time voice session
-- one main voice agent
-- one runtime prompt from `prompts/anonymous_reporting_agent.yaml`
-- one structured five-stage call flow
-- backend support for privacy, tracking, storage, summary-based classification, and routing
+`ripoti-kwa-siri` is structured as clean architecture with four strict layers. Dependencies only point inward — the domain knows nothing about FastAPI, databases, or LLM providers.
 
 ```mermaid
 flowchart TD
-    A["Citizen Caller"] --> B["Telephony Entry"]
-    B --> C["Real-Time Voice Session"]
-    C --> D["Sauti Voice Agent"]
+    Interface["interface/\nFastAPI · CLI"]
+    Infrastructure["infrastructure/\nClassifiers · Persistence · Voice · Config"]
+    Application["application/\nUse Cases · Ports"]
+    Domain["domain/\nEntities · Repositories · Services"]
 
-    D --> E["Greeting and Reassurance"]
-    D --> F["Initial Report Capture"]
-    D --> G["Clarification"]
-    D --> H["Summary Confirmation"]
-    D --> I["Tracking and Close"]
-
-    D --> J["Case Store"]
-    D --> K["Privacy Handling"]
-    D --> L["Tracking Code Generation"]
-    D --> M["Summary Classification And Routing"]
-
-    M --> N["EACC"]
-    M --> O["DCI"]
-    M --> P["Review Queue"]
+    Interface --> Infrastructure
+    Interface --> Application
+    Infrastructure --> Application
+    Application --> Domain
 ```
 
-See [voice-agent-architecture.md](/Users/admin/ripoti-kwa-siri/docs/architecture/voice-agent-architecture.md) for the fuller design.
+### Domain layer
+
+The innermost layer. No external dependencies.
+
+- `entities/` — `CaseReport`, `RoutingClassification`, `TrackingReference`
+- `repositories/` — `ICaseRepository` protocol (interface only — infrastructure implements it)
+- `services/` — privacy scrubbing, case summary, tracking code generation, routing destination
+
+### Application layer
+
+Orchestrates domain objects. Depends only on the domain.
+
+- `use_cases/` — `SubmitReportUseCase` (intake → finalise → persist → respond)
+- `ports/` — `RoutingClassifier`, `LiveRoutingClassifier` protocols
+
+### Infrastructure layer
+
+Implements the application ports. Knows about external providers.
+
+- `config/` — `AppSettings` (pydantic-settings, environment-driven)
+- `persistence/` — `InMemoryCaseRepository` (implements `ICaseRepository`)
+- `classifiers/` — `GeminiRoutingClassifier`, `OpenAIRoutingClassifier`, `RuleBasedRoutingClassifier`, `FallbackRoutingClassifier`
+- `voice/` — `SautiAgent`, LiveKit telephony bridge, voice model settings
+
+### Interface layer
+
+The outermost layer. Bridges HTTP and CLI to the application layer.
+
+- `api/` — FastAPI app, intake route, request/response schemas
+- `cli/` — `run_agent.py`, `run_api.py` entry points
 
 ## Repository Structure
 
 ```text
 ripoti-kwa-siri/
-├── README.md
-├── app/
-│   ├── api/
-│   │   ├── routes/
-│   │   └── schemas/
-│   ├── main.py
-│   ├── core/
-│   │   ├── config.py
-│   │   ├── logging.py
-│   │   └── security.py
-│   ├── call_flow/
-│   │   ├── controller.py
-│   ├── integrations/
-│   │   ├── telephony.py
-│   │   ├── realtime.py
-│   │   └── llm.py
-│   ├── preview.py
-│   ├── runtime.py
-│   ├── services/
-│   │   ├── case_store.py
-│   │   ├── intake_service.py
-│   │   ├── privacy.py
-│   │   ├── routing.py
-│   │   ├── summary.py
-│   │   └── tracking.py
-│   └── models/
-│       ├── case.py
-│       └── tracking.py
-├── run_agent.py
-├── run_api.py
+├── src/
+│   ├── domain/
+│   │   ├── entities/
+│   │   │   ├── case.py               # CaseReport entity
+│   │   │   ├── routing.py            # RoutingClassification, ReportType
+│   │   │   └── tracking.py           # TrackingReference
+│   │   ├── repositories/
+│   │   │   └── case_repository.py    # ICaseRepository protocol
+│   │   └── services/
+│   │       ├── privacy.py            # Scrub and strip caller identifiers
+│   │       ├── summary.py            # Build case summary
+│   │       ├── tracking.py           # Generate tracking code
+│   │       └── routing.py            # Map report type to destination
+│   │
+│   ├── application/
+│   │   ├── ports/
+│   │   │   └── classifier.py         # RoutingClassifier protocol
+│   │   └── use_cases/
+│   │       └── submit_report.py      # SubmitReportUseCase
+│   │
+│   ├── infrastructure/
+│   │   ├── config/
+│   │   │   └── settings.py           # AppSettings
+│   │   ├── persistence/
+│   │   │   └── memory_case_repository.py
+│   │   ├── classifiers/
+│   │   │   ├── gemini.py
+│   │   │   ├── openai.py
+│   │   │   ├── rule_based.py
+│   │   │   └── fallback.py           # Gemini → OpenAI → RuleBased chain
+│   │   └── voice/
+│   │       ├── agent.py              # SautiAgent + LiveKit server
+│   │       ├── telephony.py          # SIP trunk and dispatch rule builders
+│   │       └── model_settings.py     # Voice model config
+│   │
+│   └── interface/
+│       ├── api/
+│       │   ├── main.py               # FastAPI app factory
+│       │   ├── routes/intake.py      # POST /intake/preview
+│       │   └── schemas/intake.py     # IntakeRequest, IntakeResponse
+│       └── cli/
+│           ├── run_agent.py
+│           └── run_api.py
+│
+├── run_agent.py                       # Root entry point — voice agent
+├── run_api.py                         # Root entry point — REST preview
+├── prompts/
+│   └── anonymous_reporting_agent.yaml # Sauti agent instructions
 ├── tests/
 │   ├── test_intake.py
 │   ├── test_privacy.py
-│   └── test_routing.py
+│   ├── test_routing.py
+│   └── test_telephony.py
 ├── infra/
-│   ├── containers/
 │   └── scripts/
 └── docs/
     ├── architecture/
-    │   ├── ripoti-kwa-siri-architecture.md
-    │   ├── case-data-model.md
-    │   └── voice-agent-architecture.md
     └── product/
-        ├── ripoti-kwa-siri-service-flow.md
-        ├── routing-rules.md
-        └── call-stages.md
 ```
-
-## What Each Area Means
-
-- `app/api`: webhook endpoints, health endpoints, and request schemas
-- `app/main.py`: FastAPI application entrypoint for the prototype preview API
-- `app/call_flow`: the intake controller for the voice agent
-- `app/integrations`: provider-specific adapters kept at the edge of the prototype
-- `app/runtime.py`: shared runtime assembly for the voice agent and preview paths
-- `app/preview.py`: local preview helpers used by tests and review flows
-- `app/services`: core prototype logic for intake, privacy, case storage, summary, post-call classification, tracking, and routing
-- `app/models`: simple case and tracking data models
-- `run_agent.py`: root entrypoint for the real-time voice agent
-- `run_api.py`: root entrypoint for the FastAPI preview app
-- `tests`: small focused tests for intake, privacy, and routing behavior
-- `infra`: local container and helper scripts for running the prototype
-- `docs`: architecture notes, service flows, and product decisions
-
-## Prototype Scope
-
-- handle intake for one anonymous report from start to finish
-- generate a tracking code
-- scrub caller identifiers before storing the case
-- create a short referral summary
-- classify the final summary into a broad routing category
-- route the case to a mock or early hand-off endpoint
 
 ## Design Principles
 
-- `Anonymous by default`: the case record should not carry direct caller identity
-- `Minimize data`: ask only for details that help routing or investigation
-- `Track without identity`: the caller uses a tracking code instead of an in-person reference
-- `Route intelligently`: each case goes to the institution best suited to act on it
-- `Audit internally`: keep internal accountability without exposing the caller
+- **Anonymous by default** — the case record never carries a direct caller identity
+- **Minimize data** — ask only for details that help routing or investigation
+- **Track without identity** — the caller uses a human-readable tracking code, not a personal reference
+- **Route intelligently** — each case goes to the institution best suited to act on it (EACC, DCI, or review queue)
+- **Dependency rule** — inner layers never import from outer layers; the domain is free of all framework concerns
+
+## Routing
+
+The classifier chain runs in order until one succeeds:
+
+1. `GeminiRoutingClassifier` — Google Gemini structured output
+2. `OpenAIRoutingClassifier` — OpenAI JSON schema fallback
+3. `RuleBasedRoutingClassifier` — keyword matching, always available
+
+| Report type | Destination |
+|---|---|
+| `corruption` | EACC |
+| `organized_crime` | DCI |
+| `unknown` | review_queue |
+
+## Setup
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then:
+
+```bash
+uv sync --extra dev
+cp .env.example .env.local   # set GOOGLE_API_KEY, OPENAI_API_KEY, realtime URL/key/secret
+```
+
+Run the voice agent:
+
+```bash
+uv run run_agent.py
+```
+
+Run the REST preview:
+
+```bash
+uv run run_api.py
+```
+
+Run tests:
+
+```bash
+uv run python -m pytest tests/ -v
+```
 
 ## Important Note
 
-Claims such as `encrypted`, `anonymous`, or `scrubbed` should only be shown to users when the actual telephony, storage, and hand-off implementation truly supports them.
-
-## Setup (uv)
-
-- Install uv: https://docs.astral.sh/uv/getting-started/installation/
-- Install dependencies: `uv sync`
-- Copy environment: `cp .env.example .env.local` and set your keys (realtime URL/key/secret and model choices)
-- Run the real-time agent: `uv run run_agent.py`
-- Run the REST preview (optional): `uv run run_api.py`
+Claims such as `encrypted`, `anonymous`, or `scrubbed` should only be shown to users when the actual telephony, storage, and hand-off implementation truly supports them. This repository is currently at prototype stage.
