@@ -1,6 +1,6 @@
 """Tests for privacy and scrubbing behavior."""
 
-from app.services.privacy import scrub_phone_number, strip_direct_identifiers
+from src.domain.services.privacy import scrub_phone_number, strip_direct_identifiers
 
 
 def test_scrub_phone_number_hides_most_digits() -> None:

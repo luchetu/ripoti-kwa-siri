@@ -11,7 +11,7 @@ import yaml
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-BASE_DIR = Path(__file__).resolve().parents[4]
+BASE_DIR = Path(__file__).resolve().parents[3]  # src/infrastructure/config/ → project root
 
 
 class AppSettings(BaseSettings):
